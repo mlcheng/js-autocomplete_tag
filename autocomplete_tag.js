@@ -45,13 +45,13 @@ iqwerty.autocomplete = (function() {
 
 			eventListeners: {
 				/**
-				 * Called when the user types something
+				 * Called when the user types something. The current input is sent as a parameter to the callback
 				 * @type {Function}
 				 */
 				onInputChangedListener: null,
 
 				/**
-				 * Called when tags are added or removed
+				 * Called when tags are added or removed. The current tags are sent as a parameter to the callback
 				 * @type {Function}
 				 */
 				onTagChangedListener: null
@@ -81,6 +81,8 @@ iqwerty.autocomplete = (function() {
 				})(_options, options);
 			}
 			options = _options;
+
+			this.apply();
 		};
 
 		/**
@@ -133,12 +135,44 @@ iqwerty.autocomplete = (function() {
 
 
 		/**
+		 * A list containing the current tags selected
+		 * @type {Array}
+		 */
+		var _tags = [];
+		this.getTags = function() {
+			return _tags;
+		};
+		/**
+		 * Push a tag into the tags stack.
+		 * The onTagChanged callback will also be called.
+		 * @param  {String} tag The tag to add to the stack
+		 */
+		this.pushTag = function(tag) {
+			_tags.push(tag);
+
+
+			this.tagChanged(_tags);
+		};
+		/**
+		 * Remove the specified tag from the stack.
+		 * The onTagChanged callback will also be called.
+		 * @param  {String} tag The tag to remove
+		 */
+		this.popTag = function(tag) {
+			_tags.splice(_tags.indexOf(tag), 1);
+
+
+			this.tagChanged(_tags);
+		};
+
+
+		/**
 		 * Apply changes to the Autocomplete object after options are changed
 		 *
 		 * Status: Incomplete
 		 */
 		this.apply = function() {
-			if(this.getOptions().eventListeners.onInputChangedListener != null) {
+			if(typeof this.getOptions().eventListeners.onInputChangedListener == "function") {
 				this.getInputStage().addEventListener("input", function() {
 					this.getOptions().eventListeners.onInputChangedListener(stripTags(this.getInputStage().innerHTML));
 				}.bind(this));
@@ -223,9 +257,6 @@ iqwerty.autocomplete = (function() {
 				this.focus();
 			}.bind(this))(target);
 
-
-
-			//this.apply();
 			this.injectStyles();
 		}.bind(this))();
 
@@ -307,7 +338,6 @@ iqwerty.autocomplete = (function() {
 	 */
 	Autocomplete.prototype.setInputThreshold = function(inputThreshold) {
 		this.setOptions({settings: {inputThreshold: inputThreshold}});
-		this.apply();
 	};
 
 	/**
@@ -316,7 +346,6 @@ iqwerty.autocomplete = (function() {
 	 */
 	Autocomplete.prototype.setOnInputChangedListener = function(onInputChangedListener) {
 		this.setOptions({eventListeners: {onInputChangedListener: onInputChangedListener}});
-		this.apply();
 	};
 
 	/**
@@ -325,7 +354,6 @@ iqwerty.autocomplete = (function() {
 	 */
 	Autocomplete.prototype.setOnTagChangedListener = function(onTagChangedListener) {
 		this.setOptions({eventListeners: {onTagChangedListener: onTagChangedListener}});
-		this.apply();
 	};
 
 	/**
@@ -414,6 +442,11 @@ iqwerty.autocomplete = (function() {
 
 
 
+		// add the tag to the list of current tags
+		this.pushTag(text);
+
+
+
 		this.clearInput();
 		this.hideSuggestions();
 		this.focus();
@@ -427,10 +460,25 @@ iqwerty.autocomplete = (function() {
 	 */
 	Autocomplete.prototype.removeTag = function(tag) {
 		this.getTagStage().removeChild(tag);
-		tag = null;
 
+		// remove the tag from the list of current tags
+		this.popTag(tag.innerHTML);
+
+
+		tag = null;
 		this.focus();
 	};
+
+	/**
+	 * Call the onTagChanged callback if it is set.
+	 * @param  {Array} tags  The array of tags to send to the callback param
+	 */
+	Autocomplete.prototype.tagChanged = function(tags) {
+		if(typeof this.getOptions().eventListeners.onTagChangedListener == "function") {
+			this.getOptions().eventListeners.onTagChangedListener(tags);
+		}
+	};
+
 
 	/**
 	 * Clears the user input
