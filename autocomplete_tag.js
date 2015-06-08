@@ -21,7 +21,7 @@ iqwerty.autocomplete = (function() {
 	 * @param {Array}  data    An array of data that will be the search suggestions
 	 * @param {Object} options The options for the Autocomplete. Details below
 	 */
-	function Autocomplete(target, data, options) {
+	function Autocomplete(target, options) {
 
 		/**
 		 * The default options for the Autocomplete.
@@ -65,19 +65,21 @@ iqwerty.autocomplete = (function() {
 		 * @param {Object} options The object containing the options.
 		 */
 		this.setOptions = function(options) {
-			_options = (function mergeOptions(initial, custom) {
-				var merged = custom;
-				for(var prop in initial) {
-					if(merged.hasOwnProperty(prop)) {
-						if(initial[prop] != null && initial[prop].constructor == Object) {
-							merged[prop] = mergeOptions(initial[prop], merged[prop]);
+			if(options != undefined) {
+				_options = (function mergeOptions(initial, custom) {
+					var merged = custom;
+					for(var prop in initial) {
+						if(merged.hasOwnProperty(prop)) {
+							if(initial[prop] != null && initial[prop].constructor == Object) {
+								merged[prop] = mergeOptions(initial[prop], merged[prop]);
+							}
+						} else {
+							merged[prop] = initial[prop];
 						}
-					} else {
-						merged[prop] = initial[prop];
 					}
-				}
-				return merged;
-			})(_options, options);
+					return merged;
+				})(_options, options);
+			}
 			options = _options;
 		};
 
@@ -243,8 +245,11 @@ iqwerty.autocomplete = (function() {
 			var style = document.createElement("style");
 
 			style.insertAdjacentHTML("beforeend", Autocomplete.prototype.injectStyle(CLASS_SUGGESTIONS_LI, STYLE_SUGGESTIONS_LI_HOVER, ":hover"));
+
 			style.insertAdjacentHTML("beforeend", Autocomplete.prototype.injectStyle(CLASS_HIDDEN, STYLE_HIDDEN));
+
 			style.insertAdjacentHTML("beforeend", Autocomplete.prototype.injectStyle(CLASS_TAG, STYLE_TAG_AFTER, ":after"));
+
 			style.insertAdjacentHTML("beforeend", Autocomplete.prototype.injectStyle(CLASS_AUTOCOMPLETE_EDITOR, STYLE_AUTOCOMPLETE_EDITOR_BEFORE, ":before"));
 
 			document.head.appendChild(style);
